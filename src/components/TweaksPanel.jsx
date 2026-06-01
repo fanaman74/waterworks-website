@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { WW_THEMES } from '../theme';
 
 const __TWEAKS_STYLE = `
   .twk-panel{position:fixed;right:16px;bottom:16px;z-index:2147483646;width:280px;
@@ -449,37 +448,5 @@ export function TweakButton({ label, onClick, secondary = false }) {
   return (
     <button type="button" className={secondary ? 'twk-btn secondary' : 'twk-btn'}
             onClick={onClick}>{label}</button>
-  );
-}
-
-// ── DirectionPicker ──────────────────────────────────────────────────────────
-export function DirectionPicker({ value, onChange }) {
-  return (
-    <div style={{ display: "grid", gap: 8 }}>
-      {Object.entries(WW_THEMES).map(([key, th]) => {
-        const on = value === key;
-        return (
-          <button key={key} onClick={() => onChange(key)}
-            style={{
-              display: "flex", alignItems: "center", gap: 12, width: "100%", textAlign: "left",
-              padding: "10px 12px", borderRadius: 12, cursor: "pointer",
-              border: on ? "2px solid var(--tw-accent, #2A6FDB)" : "1.5px solid rgba(0,0,0,.12)",
-              background: on ? "rgba(42,111,219,.06)" : "#fff",
-              color: "#29261b",
-              fontFamily: "ui-sans-serif, system-ui, -apple-system, sans-serif"
-            }}>
-            <span style={{ display: "flex", gap: 4 }}>
-              {[th.vars["--primary"], th.vars["--accent"], th.dark ? th.vars["--bg"] : th.vars["--hero-bg"]].map((c, i) => (
-                <span key={i} style={{ width: 16, height: 16, borderRadius: 5, background: c, boxShadow: "inset 0 0 0 1px rgba(0,0,0,.08)" }} />
-              ))}
-            </span>
-            <span style={{ lineHeight: 1.2 }}>
-              <span style={{ display: "block", fontWeight: 700, fontSize: 13.5 }}>{th.name}</span>
-              <span style={{ display: "block", fontSize: 11.5, opacity: .6 }}>{th.desc}</span>
-            </span>
-          </button>
-        );
-      })}
-    </div>
   );
 }

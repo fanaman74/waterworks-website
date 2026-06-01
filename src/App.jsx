@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useTweaks, TweaksPanel, TweakSection, TweakRadio, DirectionPicker } from './components/TweaksPanel';
+import { useTweaks, TweaksPanel, TweakSection, TweakRadio } from './components/TweaksPanel';
 import { Header, Footer, useReveal } from './components/Shared';
 import { applyTheme } from './theme';
 import Home from './pages/Home';
@@ -83,9 +83,16 @@ export default function App() {
 
       <TweaksPanel>
         <TweakSection label="Direction" />
-        <div style={{ padding: "0 2px 6px" }}>
-          <DirectionPicker value={t_.theme} onChange={(v) => setTweak("theme", v)} />
-        </div>
+        <TweakRadio 
+          label="Theme" 
+          value={t_.theme}
+          options={[
+            { value: "tide", label: "Tide" }, 
+            { value: "meadow", label: "Meadow" }, 
+            { value: "current", label: "Current" }
+          ]}
+          onChange={(v) => setTweak("theme", v)} 
+        />
         <TweakSection label="Typeface" />
         <TweakRadio 
           label="Pairing" 
