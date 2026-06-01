@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useTweaks, TweaksPanel, TweakSection, TweakRadio } from './components/TweaksPanel';
 import { Header, Footer, useReveal } from './components/Shared';
 import { applyTheme } from './theme';
 import Home from './pages/Home';
@@ -17,7 +16,7 @@ function parseRoute() {
 }
 
 export default function App() {
-  const [t_, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  const t_ = TWEAK_DEFAULTS;
   const [route, setRoute] = useState(parseRoute());
   
   // Persist language in localStorage
@@ -80,42 +79,6 @@ export default function App() {
       <Header lang={lang} setLang={setLang} route={base} go={go} />
       <main style={{ flex: 1 }}>{page}</main>
       <Footer lang={lang} go={go} />
-
-      <TweaksPanel>
-        <TweakSection label="Direction" />
-        <TweakRadio 
-          label="Theme" 
-          value={t_.theme}
-          options={[
-            { value: "tide", label: "Tide" }, 
-            { value: "meadow", label: "Meadow" }, 
-            { value: "current", label: "Current" }
-          ]}
-          onChange={(v) => setTweak("theme", v)} 
-        />
-        <TweakSection label="Typeface" />
-        <TweakRadio 
-          label="Pairing" 
-          value={t_.font}
-          options={[
-            { value: "modern", label: "Modern" }, 
-            { value: "technical", label: "Technical" }, 
-            { value: "editorial", label: "Editorial" }
-          ]}
-          onChange={(v) => setTweak("font", v)} 
-        />
-        <TweakSection label="Hero layout" />
-        <TweakRadio 
-          label="Style" 
-          value={t_.hero}
-          options={[
-            { value: "split", label: "Split" }, 
-            { value: "overlay", label: "Overlay" }, 
-            { value: "editorial", label: "Editorial" }
-          ]}
-          onChange={(v) => setTweak("hero", v)} 
-        />
-      </TweaksPanel>
     </div>
   );
 }
