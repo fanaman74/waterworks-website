@@ -29,7 +29,7 @@ button { font-family: inherit; cursor: pointer; }
 ::selection { background: var(--accent); color: var(--accent-ink); }
 
 .app { min-height: 100vh; display: flex; flex-direction: column; width: 100%; overflow-x: hidden; }
-.wrap { width: 100%; max-width: var(--maxw); margin: 0 auto; padding: 0 28px; }
+.wrap { width: 100%; max-width: var(--maxw); margin: 0 auto; padding: 0 42px; }
 .section { padding: 92px 0; }
 .section-sm { padding: 56px 0; }
 
@@ -342,7 +342,7 @@ button { font-family: inherit; cursor: pointer; }
 }
 @media (max-width: 600px) {
   .section { padding: 64px 0; }
-  .wrap { padding: 0 20px; }
+  .wrap { padding: 0 24px; }
   .grid-3, .grid-2, .gallery { grid-template-columns: 1fr; }
   .hero-overlay .infobar { grid-template-columns: 1fr; }
   .hero-overlay .infobar .cell + .cell { border-left: none; border-top: 1px solid var(--line); }
