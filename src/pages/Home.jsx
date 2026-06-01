@@ -159,15 +159,22 @@ export default function Home({ lang, go, hero }) {
               </h2>
               <p style={{ color: "var(--muted)", fontSize: 17.5 }}>{L(h.intro)}</p>
             </div>
-            <div className="reveal" style={{ display: "grid", gap: 16 }}>
-              {h.promises.map((p, i) => (
-                <div className="promise-card" key={i}>
-                  <div className="num">0{i + 1}</div>
-                  <h3>{L(p.t)}</h3>
-                  <p>{L(p.d)}</p>
-                </div>
-              ))}
+            <div className="reveal" style={{ display: "flex", justifyContent: "center" }}>
+              <div style={{ borderRadius: 16, overflow: "hidden", boxShadow: "0 12px 36px rgba(0, 0, 0, 0.12)", border: "1px solid var(--line)", width: "100%" }}>
+                <Img src={WW.IMG.work} alt="Wayne Pettit plumbing work" style={{ width: "100%", height: "auto", display: "block" }} />
+              </div>
             </div>
+          </div>
+
+          {/* Smaller promise cards at the bottom */}
+          <div className="grid-3" style={{ marginTop: 48, gap: 24 }}>
+            {h.promises.map((p, i) => (
+              <div className="promise-card reveal" style={{ padding: "20px 24px" }} key={i}>
+                <div className="num" style={{ fontSize: 13, letterSpacing: ".08em" }}>0{i + 1}</div>
+                <h3 style={{ fontSize: 18, margin: "8px 0" }}>{L(p.t)}</h3>
+                <p style={{ fontSize: 14.5, lineHeight: 1.4 }}>{L(p.d)}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
