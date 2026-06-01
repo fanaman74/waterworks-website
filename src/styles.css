@@ -187,7 +187,7 @@ button { font-family: inherit; cursor: pointer; }
 @keyframes ph-flame { 0%,100% { transform: scaleY(.82); opacity: .85; } 50% { transform: scaleY(1.18); opacity: 1; } }
 @keyframes ph-fall { 0% { transform: translateY(0); opacity: 0; } 12% { opacity: 1; } 82% { opacity: 1; } 100% { transform: translateY(var(--fall, 80px)); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .ph-flow, .ph-flame, .ph-glow, .ph-drop, .ph-chip .live { animation: none !important; } }
-@media (max-width: 920px) { .pipehouse--float { display: none; } }
+@media (max-width: 1150px) { .pipehouse--float { display: none; } }
 
 /* ---- wave divider ---- */
 .wave { display: block; width: 100%; height: 64px; color: var(--bg); }
@@ -330,7 +330,7 @@ button { font-family: inherit; cursor: pointer; }
 .reveal.in { opacity: 1; transform: none; }
 
 /* responsive */
-@media (max-width: 920px) {
+@media (max-width: 1150px) {
   .nav { display: none; }
   .menu-btn { display: flex; }
   .header.open .mobile-nav { display: flex; }
