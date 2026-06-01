@@ -180,9 +180,9 @@ export default function Home({ lang, go, hero }) {
       </section>
 
       {/* eco */}
-      <section className="eco">
+      <section className="eco" style={{ paddingBottom: 92 }}>
         <Wave up />
-        <div className="wrap section">
+        <div className="wrap" style={{ paddingTop: 28 }}>
           <div className="eco-grid">
             <div className="reveal">
               <Eyebrow>{L({ en: "Sustainability", fr: "Durabilité", nl: "Duurzaamheid" })}</Eyebrow>
