@@ -263,7 +263,24 @@ export function Contact({ lang, go }) {
     if (!form.name.trim()) errs.name = true;
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email)) errs.email = true;
     setErrors(errs);
-    if (Object.keys(errs).length === 0) setSent(true);
+    
+    if (Object.keys(errs).length === 0) {
+      const serviceType = C.types[type] ? L(C.types[type]) : 'General';
+      fetch('/api/leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...form, serviceType })
+      })
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to submit');
+        return res.json();
+      })
+      .then(() => setSent(true))
+      .catch(err => {
+        console.error(err);
+        alert('Could not send message. Please try again or call directly.');
+      });
+    }
   };
 
   return (
