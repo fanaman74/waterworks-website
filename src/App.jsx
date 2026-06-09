@@ -3,6 +3,7 @@ import { Header, Footer, useReveal } from './components/Shared';
 import { applyTheme } from './theme';
 import Home from './pages/Home';
 import { Services, Work, WorkDetail, Press, Training, Links, Contact } from './pages/InnerPages';
+import AdminCRM from './pages/AdminCRM';
 
 const TWEAK_DEFAULTS = {
   theme: "tide",
@@ -70,6 +71,8 @@ export default function App() {
     page = <Links lang={lang} go={go} />;
   } else if (base === "contact") {
     page = <Contact lang={lang} go={go} />;
+  } else if (base === "admin") {
+    page = <AdminCRM lang={lang} go={go} />;
   } else {
     page = <Home lang={lang} go={go} hero={t_.hero} />;
   }
