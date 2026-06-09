@@ -15,6 +15,19 @@ export default function AdminCRM({ lang }) {
   const [noteText, setNoteText] = useState('');
   const [saveStatus, setSaveStatus] = useState('');
 
+  const [isCreatingLead, setIsCreatingLead] = useState(false);
+  const [newLeadForm, setNewLeadForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    message: '',
+    serviceType: 'Repairs',
+    status: 'New',
+    notes: ''
+  });
+  const [newLeadErrors, setNewLeadErrors] = useState({});
+
   useEffect(() => {
     if (token) {
       fetchLeads();
@@ -136,6 +149,49 @@ export default function AdminCRM({ lang }) {
     .catch(err => console.error(err));
   };
 
+  const handleCreateLeadSubmit = (e) => {
+    e.preventDefault();
+    const errs = {};
+    if (!newLeadForm.name.trim()) errs.name = true;
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(newLeadForm.email)) errs.email = true;
+    setNewLeadErrors(errs);
+
+    if (Object.keys(errs).length === 0) {
+      fetch('/api/leads', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(newLeadForm)
+      })
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to create lead');
+        return res.json();
+      })
+      .then(data => {
+        fetchLeads();
+        setIsCreatingLead(false);
+        setSelectedLeadId(data.lead.id);
+        setNoteText(data.lead.notes || '');
+        setNewLeadForm({
+          name: '',
+          email: '',
+          phone: '',
+          address: '',
+          message: '',
+          serviceType: 'Repairs',
+          status: 'New',
+          notes: ''
+        });
+      })
+      .catch(err => {
+        console.error(err);
+        alert('Failed to save the new lead. Please try again.');
+      });
+    }
+  };
+
   const selectedLead = leads.find(l => l.id === selectedLeadId);
 
   // Filter and search
@@ -190,9 +246,25 @@ export default function AdminCRM({ lang }) {
             <Eyebrow>Control Room</Eyebrow>
             <h1 className="hl" style={{ fontSize: 'clamp(28px, 4vw, 42px)', margin: '8px 0 0' }}>Waterworks Leads CRM</h1>
           </div>
-          <button className="btn btn-ghost" onClick={handleLogout}>
-            Logout <Icon name="arrow" size={16} style={{ marginLeft: 8 }} />
-          </button>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <button 
+              className="btn btn-accent" 
+              onClick={() => { 
+                setIsCreatingLead(true); 
+                setSelectedLeadId(null); 
+              }}
+              style={{ padding: '10px 20px', fontSize: 14.5 }}
+            >
+              + Add Lead
+            </button>
+            <button 
+              className="btn btn-ghost" 
+              onClick={handleLogout}
+              style={{ padding: '10px 20px', fontSize: 14.5 }}
+            >
+              Logout <Icon name="arrow" size={16} style={{ marginLeft: 8 }} />
+            </button>
+          </div>
         </div>
 
         {/* Search and Filters */}
@@ -244,6 +316,7 @@ export default function AdminCRM({ lang }) {
                   <div 
                     key={lead.id}
                     onClick={() => {
+                      setIsCreatingLead(false);
                       setSelectedLeadId(lead.id);
                       setNoteText(lead.notes || '');
                     }}
@@ -297,7 +370,122 @@ export default function AdminCRM({ lang }) {
 
             {/* Right detail panel */}
             <div>
-              {selectedLead ? (
+              {isCreatingLead ? (
+                <div className="card" style={{ padding: 32, margin: 0, background: 'var(--bg)', border: '1px solid var(--line)' }}>
+                  <div style={{ borderBottom: '1px solid var(--line)', paddingBottom: 16, marginBottom: 20 }}>
+                    <Eyebrow>New Lead Registration</Eyebrow>
+                    <h2 style={{ marginTop: 6, fontSize: 28 }}>Add New Client</h2>
+                  </div>
+                  <form onSubmit={handleCreateLeadSubmit}>
+                    <div className="field-row">
+                      <div className="field">
+                        <label>Client Name *</label>
+                        <input 
+                          type="text" 
+                          value={newLeadForm.name}
+                          onChange={(e) => setNewLeadForm({ ...newLeadForm, name: e.target.value })}
+                          style={newLeadErrors.name ? { borderColor: 'var(--accent)' } : {}}
+                          placeholder="Wayne Pettit"
+                          required
+                        />
+                      </div>
+                      <div className="field">
+                        <label>Email Address *</label>
+                        <input 
+                          type="email" 
+                          value={newLeadForm.email}
+                          onChange={(e) => setNewLeadForm({ ...newLeadForm, email: e.target.value })}
+                          style={newLeadErrors.email ? { borderColor: 'var(--accent)' } : {}}
+                          placeholder="client@example.com"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="field-row">
+                      <div className="field">
+                        <label>Phone Number</label>
+                        <input 
+                          type="text" 
+                          value={newLeadForm.phone}
+                          onChange={(e) => setNewLeadForm({ ...newLeadForm, phone: e.target.value })}
+                          placeholder="+32 ..."
+                        />
+                      </div>
+                      <div className="field">
+                        <label>Property Address</label>
+                        <input 
+                          type="text" 
+                          value={newLeadForm.address}
+                          onChange={(e) => setNewLeadForm({ ...newLeadForm, address: e.target.value })}
+                          placeholder="1050 Ixelles"
+                        />
+                      </div>
+                    </div>
+                    <div className="field-row">
+                      <div className="field">
+                        <label>Service / Job Type</label>
+                        <select 
+                          value={newLeadForm.serviceType}
+                          onChange={(e) => setNewLeadForm({ ...newLeadForm, serviceType: e.target.value })}
+                          style={{ background: 'var(--surface-2)', border: '1.5px solid var(--line)' }}
+                        >
+                          <option value="Renovation">Renovation</option>
+                          <option value="Repairs">Repairs</option>
+                          <option value="Boiler">Boiler</option>
+                          <option value="Eco">Eco / Sustainability</option>
+                          <option value="General">General Plumbing</option>
+                        </select>
+                      </div>
+                      <div className="field">
+                        <label>Initial Status</label>
+                        <select 
+                          value={newLeadForm.status}
+                          onChange={(e) => setNewLeadForm({ ...newLeadForm, status: e.target.value })}
+                          style={{ background: 'var(--surface-2)', border: '1.5px solid var(--line)' }}
+                        >
+                          {STATUSES.map(st => <option key={st} value={st}>{st}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                    <div className="field">
+                      <label>Job Description / Message</label>
+                      <textarea 
+                        value={newLeadForm.message}
+                        onChange={(e) => setNewLeadForm({ ...newLeadForm, message: e.target.value })}
+                        placeholder="Details of the quote request or plumbing issues..."
+                        style={{ minHeight: 90 }}
+                      ></textarea>
+                    </div>
+                    <div className="field" style={{ borderTop: '1px solid var(--line)', paddingTop: 20 }}>
+                      <label>Internal Plumber Notes</label>
+                      <textarea 
+                        value={newLeadForm.notes}
+                        onChange={(e) => setNewLeadForm({ ...newLeadForm, notes: e.target.value })}
+                        placeholder="Measurements, price estimates, scheduling preferences..."
+                        style={{ minHeight: 90 }}
+                      ></textarea>
+                    </div>
+                    <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 20 }}>
+                      <button 
+                        type="button" 
+                        className="btn btn-ghost" 
+                        onClick={() => {
+                          setIsCreatingLead(false);
+                          if (leads.length > 0) {
+                            setSelectedLeadId(leads[0].id);
+                            setNoteText(leads[0].notes || '');
+                          }
+                        }}
+                      >
+                        Cancel
+                      </button>
+                      <button type="submit" className="btn btn-accent">
+                        Save Lead Request
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              ) : selectedLead ? (
                 <div className="card" style={{ padding: 32, margin: 0, background: 'var(--bg)', border: '1px solid var(--line)' }}>
                   <div style={{ borderBottom: '1px solid var(--line)', paddingBottom: 20, marginBottom: 20 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
