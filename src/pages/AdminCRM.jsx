@@ -306,7 +306,7 @@ export default function AdminCRM({ lang }) {
           <div className="grid-2" style={{ gridTemplateColumns: '1.2fr 1.8fr', gap: 24, alignItems: 'start' }}>
             
             {/* Left leads list */}
-            <div style={{ maxHeight: '70vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ maxHeight: '70vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12, padding: '8px 6px' }}>
               {filteredLeads.map(lead => {
                 const isActive = lead.id === selectedLeadId;
                 const dateStr = new Date(lead.date).toLocaleDateString(lang === 'fr' ? 'fr-BE' : lang === 'nl' ? 'nl-BE' : 'en-GB', {
@@ -327,7 +327,7 @@ export default function AdminCRM({ lang }) {
                       margin: 0,
                       border: isActive ? '2px solid var(--primary)' : '1px solid var(--line)',
                       background: isActive ? 'color-mix(in srgb, var(--primary) 6%, var(--bg))' : 'var(--bg)',
-                      transform: isActive ? 'translateY(-2px)' : 'none',
+                      transform: isActive ? 'translateY(-2px)' : undefined,
                       transition: 'all 0.2s ease'
                     }}
                   >
