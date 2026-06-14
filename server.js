@@ -6,6 +6,7 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { execSync } from 'child_process';
+import { Resend } from 'resend';
 import { addLead, readDB, updateLead, deleteLead } from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -77,24 +78,19 @@ app.post('/api/visitor/send-code', async (req, res) => {
     return res.status(200).json({ success: true, message: 'Code printed to console (API Key unconfigured)' });
   }
 
+  const resend = new Resend(apiKey);
+  const from = process.env.RESEND_FROM_EMAIL ?? 'WaterWorks <noreply@cordis-explorer.eu>';
+
   try {
-    const response = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        from: 'WaterWorks <noreply@cordi-explorer.eu>',
-        to: emailLower,
-        subject: 'Your WaterWorks Sign In Code',
-        html: `<p>Hello!</p><p>Your verification code for WaterWorks is: <strong>${code}</strong></p><p>This code is valid for 10 minutes.</p>`
-      })
+    const { error } = await resend.emails.send({
+      from,
+      to: emailLower,
+      subject: 'Your WaterWorks Sign In Code',
+      html: `<p>Hello!</p><p>Your verification code for WaterWorks is: <strong>${code}</strong></p><p>This code is valid for 10 minutes.</p>`
     });
 
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error('Resend email delivery failed:', errText);
+    if (error) {
+      console.error('Resend email delivery failed:', error);
       // We succeed anyway in dev if we logged it to the console
       return res.status(200).json({ success: true, message: 'Code printed to console (Resend service failed)' });
     }
