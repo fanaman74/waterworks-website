@@ -85,7 +85,7 @@ app.post('/api/visitor/send-code', async (req, res) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: 'WaterWorks <noreply@cordis-explorer.eu>',
+        from: 'WaterWorks <noreply@cordi-explorer.eu>',
         to: emailLower,
         subject: 'Your WaterWorks Sign In Code',
         html: `<p>Hello!</p><p>Your verification code for WaterWorks is: <strong>${code}</strong></p><p>This code is valid for 10 minutes.</p>`
