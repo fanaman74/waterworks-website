@@ -1,6 +1,11 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { addLead, readDB, updateLead, deleteLead } from './db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -91,6 +96,15 @@ app.delete('/api/leads/:id', authenticate, async (req, res) => {
   } catch (e) {
     res.status(500).json({ error: 'Failed to delete lead' });
   }
+});
+
+// Serve static files from the React frontend app build directory
+app.use(express.static(path.join(__dirname, 'dist')));
+
+// The "catchall" handler: for any request that doesn't
+// match one of the API routes above, send back React's index.html file.
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'dist/index.html'));
 });
 
 const server = app.listen(PORT, () => {

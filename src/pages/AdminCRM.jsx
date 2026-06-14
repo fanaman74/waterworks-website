@@ -64,14 +64,25 @@ export default function AdminCRM({ lang }) {
       body: JSON.stringify({ password })
     })
     .then(res => {
-      if (!res.ok) throw new Error('Incorrect password');
+      if (res.status === 401) {
+        throw new Error('Incorrect password');
+      }
+      if (!res.ok) {
+        throw new Error(`Server error (${res.status}). Check server status and deployment.`);
+      }
       return res.json();
     })
     .then(data => {
       sessionStorage.setItem('ww-crm-token', data.token);
       setToken(data.token);
     })
-    .catch(err => setLoginError(err.message));
+    .catch(err => {
+      if (err.message.includes('Failed to fetch') || err.name === 'TypeError') {
+        setLoginError('Network error: Cannot connect to the CRM server.');
+      } else {
+        setLoginError(err.message);
+      }
+    });
   };
 
   const handleLogout = () => {
