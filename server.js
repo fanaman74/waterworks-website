@@ -79,7 +79,22 @@ app.post('/api/visitor/send-code', async (req, res) => {
   }
 
   const resend = new Resend(apiKey);
-  const from = process.env.RESEND_FROM_EMAIL ?? 'WaterWorks <noreply@cordis-explorer.eu>';
+  
+  let from = process.env.RESEND_FROM_EMAIL;
+  if (from) {
+    from = from.trim();
+    // Strip escaped or literal double/single quotes
+    from = from.replace(/^["'\\]+|["'\\]+$/g, '').trim();
+    from = from.replace(/\\"/g, '"').replace(/\\'/g, "'");
+    if (from.startsWith('"') && from.endsWith('"')) {
+      from = from.slice(1, -1).trim();
+    }
+  }
+
+  // Fallback if empty, using placeholder domain, or otherwise invalid
+  if (!from || from.includes('yourdomain.com') || from.includes('example.com')) {
+    from = 'WaterWorks <noreply@cordis-explorer.eu>';
+  }
 
   try {
     const { error } = await resend.emails.send({
