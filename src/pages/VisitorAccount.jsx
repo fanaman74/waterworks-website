@@ -46,7 +46,9 @@ export default function VisitorAccount({ go }) {
         supabase.from('profiles').select('*').eq('id', u.id).single(),
         supabase.from('leads').select('*').eq('submitted_by', u.id).order('created_at', { ascending: false })
       ]).then(([profileRes, leadsRes]) => {
-        if (profileRes.data) {
+        if (profileRes.error) {
+          console.error('Failed to load profile:', profileRes.error.message);
+        } else if (profileRes.data) {
           setProfile(profileRes.data);
           setEditForm({
             name: profileRes.data.name || '',
@@ -54,11 +56,21 @@ export default function VisitorAccount({ go }) {
             address: profileRes.data.address || ''
           });
         }
-        if (leadsRes.data) setLeads(leadsRes.data);
+        if (leadsRes.error) {
+          console.error('Failed to load leads:', leadsRes.error.message);
+        } else if (leadsRes.data) {
+          setLeads(leadsRes.data);
+        }
+        setLoading(false);
+      }).catch(err => {
+        console.error('Account load error:', err);
         setLoading(false);
       });
+    }).catch(err => {
+      console.error('Session error:', err);
+      setLoading(false);
     });
-  }, [go]);
+  }, []); // go is stable (defined in App.jsx without useCallback but never reassigned)
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -135,19 +147,19 @@ export default function VisitorAccount({ go }) {
                 <input type="email" value={user?.email || ''} disabled style={{ opacity: 0.6 }} />
               </div>
               <div className="field" style={{ margin: 0 }}>
-                <label>Name</label>
-                <input type="text" value={editForm.name} onChange={e => setEditForm(p => ({ ...p, name: e.target.value }))} placeholder="Your name" />
+                <label htmlFor="edit-name">Name</label>
+                <input id="edit-name" type="text" value={editForm.name} onChange={e => setEditForm(p => ({ ...p, name: e.target.value }))} placeholder="Your name" />
               </div>
               <div className="field" style={{ margin: 0 }}>
-                <label>Phone</label>
-                <input type="tel" value={editForm.phone} onChange={e => setEditForm(p => ({ ...p, phone: e.target.value }))} placeholder="Your phone number" />
+                <label htmlFor="edit-phone">Phone</label>
+                <input id="edit-phone" type="tel" value={editForm.phone} onChange={e => setEditForm(p => ({ ...p, phone: e.target.value }))} placeholder="Your phone number" />
               </div>
               <div className="field" style={{ margin: 0 }}>
-                <label>Address</label>
-                <input type="text" value={editForm.address} onChange={e => setEditForm(p => ({ ...p, address: e.target.value }))} placeholder="Your address" />
+                <label htmlFor="edit-address">Address</label>
+                <input id="edit-address" type="text" value={editForm.address} onChange={e => setEditForm(p => ({ ...p, address: e.target.value }))} placeholder="Your address" />
               </div>
             </div>
-            {saveError && <p style={{ color: 'var(--accent)', fontSize: 13, marginBottom: 12 }}>{saveError}</p>}
+            {saveError && <p style={{ color: '#dc2626', fontSize: 13, marginBottom: 12 }}>{saveError}</p>}
             <div style={{ display: 'flex', gap: 10 }}>
               <button className="btn btn-primary" type="submit" disabled={saving} style={{ fontSize: 13 }}>
                 {saving ? 'Saving...' : 'Save'}
@@ -162,7 +174,7 @@ export default function VisitorAccount({ go }) {
       <div>
         <h3 style={{ fontSize: 18, marginBottom: 16 }}>Service Request History</h3>
         {leads.length === 0 ? (
-          <p style={{ color: 'var(--muted)', fontSize: 14 }}>No service requests yet. <button className="btn btn-ghost" style={{ border: 'none', background: 'none', color: 'var(--primary)', cursor: 'pointer', padding: 0, fontSize: 14 }} onClick={() => go('contact')}>Submit a request</button></p>
+          <div style={{ color: 'var(--muted)', fontSize: 14 }}>No service requests yet. <button className="btn btn-ghost" style={{ border: 'none', background: 'none', color: 'var(--primary)', cursor: 'pointer', padding: 0, fontSize: 14 }} onClick={() => go('contact')}>Submit a request</button></div>
         ) : (
           <div style={{ display: 'grid', gap: 12 }}>
             {leads.map(lead => (
