@@ -70,7 +70,7 @@ export function Header({ lang, setLang, route, go, visitor, onOpenAuth, onLogout
   const L = (o) => t(o, lang);
   return (
     <header className={"header" + (open ? " open" : "")}>
-      <div className="wrap">
+      <div className="header-wrap">
         <div className="header-row">
           <a className="brand" href="#" onClick={(e) => { e.preventDefault(); go("home"); setOpen(false); }}>
             <DropLogo className="drop" />

@@ -5,6 +5,7 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { execSync } from 'child_process';
 import { addLead, readDB, updateLead, deleteLead } from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -136,6 +137,21 @@ app.post('/api/visitor/verify-code', (req, res) => {
   visitorOtps.delete(emailLower); // consume code
 
   res.json({ success: true, token, user });
+});
+
+// Visitor: Get local developer git accounts to show in Google mock chooser
+app.get('/api/visitor/local-accounts', (req, res) => {
+  let name = 'Wayne Pettit';
+  let email = 'wayne@waterworksbe.net';
+  try {
+    const gitName = execSync('git config user.name').toString().trim();
+    const gitEmail = execSync('git config user.email').toString().trim();
+    if (gitName) name = gitName;
+    if (gitEmail) email = gitEmail;
+  } catch (e) {
+    // Fallback if git command is unavailable or errors out
+  }
+  res.json({ name, email });
 });
 
 // Visitor: Mock Google Login Endpoint

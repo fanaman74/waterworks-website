@@ -133,19 +133,21 @@
     <h1>Choose an account</h1>
     <p>to continue to WaterWorks</p>
 
-    <div class="account-option" onclick="selectAccount('Jane Doe', 'jane.doe@gmail.com')">
-      <div class="avatar" style="background-color: #a82582;">J</div>
-      <div class="account-info">
-        <div class="name">Jane Doe</div>
-        <div class="email">jane.doe@gmail.com</div>
+    <div id="accounts-container">
+      <div class="account-option" onclick="selectAccount('Wayne Pettit', 'wayne@waterworksbe.net')">
+        <div class="avatar" style="background-color: #0b57d0;">W</div>
+        <div class="account-info">
+          <div class="name">Wayne Pettit</div>
+          <div class="email">wayne@waterworksbe.net</div>
+        </div>
       </div>
-    </div>
 
-    <div class="account-option" onclick="selectAccount('Alex Plumber', 'alex.test@gmail.com')">
-      <div class="avatar" style="background-color: #248a3d;">A</div>
-      <div class="account-info">
-        <div class="name">Alex Plumber</div>
-        <div class="email">alex.test@gmail.com</div>
+      <div class="account-option" onclick="selectAccount('Jane Doe', 'jane.doe@gmail.com')">
+        <div class="avatar" style="background-color: #a82582;">J</div>
+        <div class="account-info">
+          <div class="name">Jane Doe</div>
+          <div class="email">jane.doe@gmail.com</div>
+        </div>
       </div>
     </div>
 
@@ -175,6 +177,38 @@
       }
       selectAccount(name, email);
     }
+
+    async function loadLocalAccounts() {
+      try {
+        const response = await fetch('/api/visitor/local-accounts');
+        if (response.ok) {
+          const gitUser = await response.json();
+          if (gitUser && gitUser.email) {
+            const container = document.getElementById('accounts-container');
+            const color = gitUser.name === 'Wayne Pettit' ? '#0b57d0' : '#248a3d';
+            container.innerHTML = `
+              <div class="account-option" onclick="selectAccount('${gitUser.name.replace(/'/g, "\\'")}', '${gitUser.email.replace(/'/g, "\\'")}')">
+                <div class="avatar" style="background-color: ${color};">${(gitUser.name || 'G')[0].toUpperCase()}</div>
+                <div class="account-info">
+                  <div class="name">${gitUser.name}</div>
+                  <div class="email">${gitUser.email}</div>
+                </div>
+              </div>
+              <div class="account-option" onclick="selectAccount('Jane Doe', 'jane.doe@gmail.com')">
+                <div class="avatar" style="background-color: #a82582;">J</div>
+                <div class="account-info">
+                  <div class="name">Jane Doe</div>
+                  <div class="email">jane.doe@gmail.com</div>
+                </div>
+              </div>
+            `;
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to load local accounts via API, falling back to defaults', err);
+      }
+    }
+    window.addEventListener('DOMContentLoaded', loadLocalAccounts);
   </script>
 </body>
 </html>
