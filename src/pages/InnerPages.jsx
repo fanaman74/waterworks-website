@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { supabase } from '../supabase';
 import { WW, t } from '../data';
 import { Icon } from '../components/Icons';
 import { Img, Eyebrow, Wave } from '../components/Shared';
@@ -257,29 +258,29 @@ export function Contact({ lang, go }) {
   const [errors, setErrors] = useState({});
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
     const errs = {};
     if (!form.name.trim()) errs.name = true;
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email)) errs.email = true;
     setErrors(errs);
-    
+
     if (Object.keys(errs).length === 0) {
-      const serviceType = C.types[type] ? L(C.types[type]) : 'General';
-      fetch('/api/leads', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, serviceType })
-      })
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to submit');
-        return res.json();
-      })
-      .then(() => setSent(true))
-      .catch(err => {
-        console.error(err);
-        alert('Could not send message. Please try again or call directly.');
+      const service_type = C.types[type] ? L(C.types[type]) : 'General';
+      const { error } = await supabase.from('leads').insert({
+        name: form.name,
+        email: form.email,
+        phone: form.phone,
+        address: form.address,
+        message: form.message,
+        service_type
       });
+      if (error) {
+        console.error(error);
+        alert('Could not send message. Please try again or call directly.');
+      } else {
+        setSent(true);
+      }
     }
   };
 
