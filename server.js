@@ -106,14 +106,13 @@ app.post('/api/visitor/send-code', async (req, res) => {
 
     if (error) {
       console.error('Resend email delivery failed:', error);
-      // We succeed anyway in dev if we logged it to the console
-      return res.status(200).json({ success: true, message: 'Code printed to console (Resend service failed)' });
+      return res.status(500).json({ success: false, error: `Email delivery failed: ${error.message}` });
     }
 
     res.status(200).json({ success: true, message: 'Verification email sent successfully' });
-  } catch (error) {
-    console.error('Error contacting Resend API:', error);
-    res.status(200).json({ success: true, message: 'Code printed to console (Network error sending email)' });
+  } catch (err) {
+    console.error('Error contacting Resend API:', err);
+    res.status(500).json({ success: false, error: `Email service error: ${err.message}` });
   }
 });
 
