@@ -161,6 +161,11 @@ export default function App() {
         onClose={() => setIsAuthModalOpen(false)} 
         onAuthSuccess={handleVisitorAuthSuccess}
       />
+      <div className="floating-lang">
+        {["en", "fr", "nl"].map((lg) => (
+          <button key={lg} className={lang === lg ? "on" : ""} onClick={() => setLang(lg)}>{lg.toUpperCase()}</button>
+        ))}
+      </div>
     </div>
   );
 }

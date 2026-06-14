@@ -83,12 +83,6 @@ export function Header({ lang, setLang, route, go, visitor, onOpenAuth, onLogout
             ))}
           </nav>
           <div className="header-actions">
-            <div className="lang">
-              {["en", "fr", "nl"].map((lg) => (
-                <button key={lg} className={lang === lg ? "on" : ""} onClick={() => setLang(lg)}>{lg.toUpperCase()}</button>
-              ))}
-            </div>
-
             {visitor ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--primary)' }}>Hi, {visitor.name}</span>
@@ -102,9 +96,6 @@ export function Header({ lang, setLang, route, go, visitor, onOpenAuth, onLogout
               </button>
             )}
 
-            <a className="btn btn-accent" href="#" style={{ height: 38, padding: '0 18px', display: 'inline-flex', alignItems: 'center' }} onClick={(e) => { e.preventDefault(); go("contact"); }}>
-              {L(WW.ui.quoteShort)}
-            </a>
             <button className="menu-btn" onClick={() => setOpen(!open)} aria-label="Menu">
               <Icon name={open ? "close" : "menu"} />
             </button>
@@ -116,10 +107,6 @@ export function Header({ lang, setLang, route, go, visitor, onOpenAuth, onLogout
               onClick={(e) => { e.preventDefault(); go(n.id); setOpen(false); }}>{L(n.label)}</a>
           ))}
           <div style={{ display: "flex", flexWrap: 'wrap', gap: 8, marginTop: 12, alignItems: 'center' }}>
-            {["en", "fr", "nl"].map((lg) => (
-              <button key={lg} className="type-chip" style={lang === lg ? { background: "var(--primary)", color: "var(--primary-ink)", borderColor: "var(--primary)", margin: 0 } : { margin: 0 }} onClick={() => setLang(lg)}>{lg.toUpperCase()}</button>
-            ))}
-
             {visitor ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
                 <span style={{ fontSize: 13, fontWeight: 600 }}>Hi, {visitor.name}</span>
