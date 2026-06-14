@@ -56,17 +56,18 @@ app.post('/api/visitor/send-code', async (req, res) => {
   if (!email || !email.includes('@')) {
     return res.status(400).json({ error: 'Valid email is required' });
   }
+  const emailLower = email.toLowerCase().trim();
   
   // Generate 6-digit OTP
   const code = Math.floor(100000 + Math.random() * 900000).toString();
-  visitorOtps.set(email, {
+  visitorOtps.set(emailLower, {
     code,
     expiresAt: Date.now() + 10 * 60 * 1000 // 10 minutes expiry
   });
 
   // Print code to console for easy testing/local fallback
   console.log(`\n==========================================`);
-  console.log(`[VISITOR AUTH CODE FOR ${email}]: ${code}`);
+  console.log(`[VISITOR AUTH CODE FOR ${emailLower}]: ${code}`);
   console.log(`==========================================\n`);
 
   const apiKey = process.env.RESEND_API_KEY;
@@ -84,7 +85,7 @@ app.post('/api/visitor/send-code', async (req, res) => {
       },
       body: JSON.stringify({
         from: 'WaterWorks <onboarding@resend.dev>',
-        to: email,
+        to: emailLower,
         subject: 'Your WaterWorks Sign In Code',
         html: `<p>Hello!</p><p>Your verification code for WaterWorks is: <strong>${code}</strong></p><p>This code is valid for 10 minutes.</p>`
       })
@@ -110,14 +111,15 @@ app.post('/api/visitor/verify-code', (req, res) => {
   if (!email || !code) {
     return res.status(400).json({ error: 'Email and code are required' });
   }
+  const emailLower = email.toLowerCase().trim();
 
-  const record = visitorOtps.get(email);
+  const record = visitorOtps.get(emailLower);
   if (!record) {
     return res.status(400).json({ error: 'No verification code requested for this email' });
   }
 
   if (Date.now() > record.expiresAt) {
-    visitorOtps.delete(email);
+    visitorOtps.delete(emailLower);
     return res.status(400).json({ error: 'Verification code expired' });
   }
 
@@ -127,11 +129,11 @@ app.post('/api/visitor/verify-code', (req, res) => {
 
   // Valid code: generate session
   const token = 'visitor-token-' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
-  const name = email.split('@')[0];
-  const user = { email, name, provider: 'email' };
+  const name = emailLower.split('@')[0];
+  const user = { email: emailLower, name, provider: 'email' };
   
   visitorSessions.set(token, user);
-  visitorOtps.delete(email); // consume code
+  visitorOtps.delete(emailLower); // consume code
 
   res.json({ success: true, token, user });
 });
@@ -142,9 +144,10 @@ app.post('/api/visitor/google', (req, res) => {
   if (!email || !name) {
     return res.status(400).json({ error: 'Email and name are required' });
   }
+  const emailLower = email.toLowerCase().trim();
 
   const token = 'visitor-token-' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
-  const user = { email, name, provider: 'google' };
+  const user = { email: emailLower, name, provider: 'google' };
   visitorSessions.set(token, user);
 
   res.json({ success: true, token, user });
