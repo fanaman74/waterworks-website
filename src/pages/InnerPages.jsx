@@ -269,7 +269,7 @@ export function Contact({ lang, go }) {
       const service_type = C.types[type] ? L(C.types[type]) : 'General';
       const { error } = await supabase.from('leads').insert({
         name: form.name,
-        email: form.email,
+        email: form.email.trim().toLowerCase(),
         phone: form.phone,
         address: form.address,
         message: form.message,
