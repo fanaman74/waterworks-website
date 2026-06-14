@@ -4,6 +4,7 @@ import { applyTheme } from './theme';
 import Home from './pages/Home';
 import { Services, Work, WorkDetail, Press, Training, Links, Contact } from './pages/InnerPages';
 import AdminCRM from './pages/AdminCRM';
+import VisitorAccount from './pages/VisitorAccount';
 import VisitorAuthModal from './components/VisitorAuthModal';
 import { supabase } from './supabase';
 
@@ -66,6 +67,7 @@ export default function App() {
 
   const handleVisitorAuthSuccess = (user) => {
     setVisitor(user);
+    go('account');
   };
 
   const handleVisitorLogout = async () => {
@@ -92,6 +94,7 @@ export default function App() {
   else if (base === "links") page = <Links lang={lang} go={go} />;
   else if (base === "contact") page = <Contact lang={lang} go={go} />;
   else if (base === "admin") page = <AdminCRM lang={lang} go={go} />;
+  else if (base === "account") page = <VisitorAccount go={go} />;
   else page = <Home lang={lang} go={go} hero={t_.hero} />;
 
   return (
