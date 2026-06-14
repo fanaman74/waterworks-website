@@ -11,6 +11,7 @@ export default function VisitorAuthModal({ isOpen, onClose, onAuthSuccess }) {
   const [tab, setTab] = useState('signin');
 
   const [step, setStep] = useState(1);
+  const [signInMode, setSignInMode] = useState('password'); // 'password' | 'otp'
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
 
@@ -48,6 +49,7 @@ export default function VisitorAuthModal({ isOpen, onClose, onAuthSuccess }) {
     setTab(t);
     setStep(1);
     setCode('');
+    setSignInMode('password');
     setPassword('');
     setConfirmPassword('');
     setError('');
@@ -64,6 +66,35 @@ export default function VisitorAuthModal({ isOpen, onClose, onAuthSuccess }) {
       provider: 'google',
       options: { redirectTo: window.location.origin }
     });
+  };
+
+  const handleSignInWithPassword = async (e) => {
+    e.preventDefault();
+    if (!email.trim() || !email.includes('@')) {
+      setError('Please enter a valid email address');
+      return;
+    }
+    if (!password) {
+      setError('Please enter your password');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password
+    });
+    if (!mountedRef.current) return;
+    setLoading(false);
+    if (signInError) {
+      setError(signInError.message);
+    } else {
+      const user = data?.user;
+      if (!user) { setError('Sign-in failed. Please try again.'); return; }
+      setStep(3);
+      onAuthSuccess({ email: user.email, name: user.email.split('@')[0], provider: 'email' });
+      setTimeout(() => onClose(), 1500);
+    }
   };
 
   const handleSendCode = async (e) => {
@@ -223,7 +254,45 @@ export default function VisitorAuthModal({ isOpen, onClose, onAuthSuccess }) {
 
         {tab === 'signin' && (
           <>
-            {step === 1 && (
+            {step === 1 && signInMode === 'password' && (
+              <form onSubmit={handleSignInWithPassword}>
+                <div className="field">
+                  <label>Email Address</label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="name@example.com"
+                    required
+                  />
+                </div>
+                <div className="field">
+                  <label>Password</label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Your password"
+                    required
+                  />
+                </div>
+                {error && <p style={{ color: 'var(--accent)', fontSize: 13, marginTop: -8, marginBottom: 12 }}>{error}</p>}
+                <button className="btn btn-primary" type="submit" style={{ width: '100%' }} disabled={loading}>
+                  {loading ? 'Signing in...' : 'Sign In'}
+                </button>
+                <p style={{ textAlign: 'center', marginTop: 14, fontSize: 13, color: 'var(--muted)' }}>
+                  <button
+                    type="button"
+                    style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: 13 }}
+                    onClick={() => { setSignInMode('otp'); setPassword(''); setError(''); }}
+                  >
+                    Sign in with magic code instead
+                  </button>
+                </p>
+              </form>
+            )}
+
+            {step === 1 && signInMode === 'otp' && (
               <form onSubmit={handleSendCode}>
                 <div className="field">
                   <label>Email Address</label>
@@ -239,6 +308,15 @@ export default function VisitorAuthModal({ isOpen, onClose, onAuthSuccess }) {
                 <button className="btn btn-primary" type="submit" style={{ width: '100%' }} disabled={loading}>
                   {loading ? 'Sending code...' : 'Send Magic Verification Code'}
                 </button>
+                <p style={{ textAlign: 'center', marginTop: 14, fontSize: 13, color: 'var(--muted)' }}>
+                  <button
+                    type="button"
+                    style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: 13 }}
+                    onClick={() => { setSignInMode('password'); setError(''); }}
+                  >
+                    Sign in with password instead
+                  </button>
+                </p>
               </form>
             )}
 
