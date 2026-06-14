@@ -44,7 +44,7 @@ export default function VisitorAccount({ go }) {
       setUser(u);
       Promise.all([
         supabase.from('profiles').select('*').eq('id', u.id).single(),
-        supabase.from('leads').select('*').eq('submitted_by', u.id).order('created_at', { ascending: false })
+        supabase.from('leads').select('*').or(`submitted_by.eq.${u.id},email.eq.${u.email}`).order('created_at', { ascending: false })
       ]).then(([profileRes, leadsRes]) => {
         if (profileRes.error) {
           console.error('Failed to load profile:', profileRes.error.message);
