@@ -109,18 +109,28 @@ app.post('/api/visitor/verify-code', (req, res) => {
     return res.status(400).json({ error: 'Email and code are required' });
   }
   const emailLower = email.toLowerCase().trim();
+  const inputCode = code.trim();
+
+  console.log(`\n--- [VERIFY CODE REQUEST FOR ${emailLower}] ---`);
+  console.log(`Received code: "${inputCode}"`);
 
   const record = visitorOtps.get(emailLower);
   if (!record) {
+    console.log(`Result: FAILED - No active OTP record found in memory`);
+    console.log(`-----------------------------------------------\n`);
     return res.status(400).json({ error: 'No verification code requested for this email' });
   }
 
   if (Date.now() > record.expiresAt) {
     visitorOtps.delete(emailLower);
+    console.log(`Result: FAILED - Verification code has expired`);
+    console.log(`-----------------------------------------------\n`);
     return res.status(400).json({ error: 'Verification code expired' });
   }
 
-  if (record.code !== code.trim()) {
+  if (record.code !== inputCode) {
+    console.log(`Result: FAILED - Mismatch! Expected "${record.code}", but received "${inputCode}"`);
+    console.log(`-----------------------------------------------\n`);
     return res.status(400).json({ error: 'Invalid verification code' });
   }
 
@@ -131,6 +141,9 @@ app.post('/api/visitor/verify-code', (req, res) => {
   
   visitorSessions.set(token, user);
   visitorOtps.delete(emailLower); // consume code
+
+  console.log(`Result: SUCCESS - Match found. Session created.`);
+  console.log(`-----------------------------------------------\n`);
 
   res.json({ success: true, token, user });
 });
