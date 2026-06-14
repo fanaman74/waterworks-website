@@ -65,7 +65,7 @@ export function useReveal(dep) {
   }, [dep]);
 }
 
-export function Header({ lang, setLang, route, go }) {
+export function Header({ lang, setLang, route, go, visitor, onOpenAuth, onLogout }) {
   const [open, setOpen] = useState(false);
   const L = (o) => t(o, lang);
   return (
@@ -88,7 +88,21 @@ export function Header({ lang, setLang, route, go }) {
                 <button key={lg} className={lang === lg ? "on" : ""} onClick={() => setLang(lg)}>{lg.toUpperCase()}</button>
               ))}
             </div>
-            <a className="btn btn-accent" href="#" onClick={(e) => { e.preventDefault(); go("contact"); }}>
+
+            {visitor ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--primary)' }}>Hi, {visitor.name}</span>
+                <button className="btn btn-ghost" style={{ padding: '8px 14px', fontSize: 13, height: 38 }} onClick={onLogout}>
+                  Log Out
+                </button>
+              </div>
+            ) : (
+              <button className="btn btn-ghost" style={{ padding: '8px 16px', fontSize: 13.5, height: 38 }} onClick={onOpenAuth}>
+                Sign In
+              </button>
+            )}
+
+            <a className="btn btn-accent" href="#" style={{ height: 38, padding: '0 18px', display: 'inline-flex', alignItems: 'center' }} onClick={(e) => { e.preventDefault(); go("contact"); }}>
               {L(WW.ui.quoteShort)}
             </a>
             <button className="menu-btn" onClick={() => setOpen(!open)} aria-label="Menu">
@@ -101,10 +115,23 @@ export function Header({ lang, setLang, route, go }) {
             <a key={n.id} href="#" className={route === n.id ? "active" : ""}
               onClick={(e) => { e.preventDefault(); go(n.id); setOpen(false); }}>{L(n.label)}</a>
           ))}
-          <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+          <div style={{ display: "flex", flexWrap: 'wrap', gap: 8, marginTop: 12, alignItems: 'center' }}>
             {["en", "fr", "nl"].map((lg) => (
-              <button key={lg} className="type-chip" style={lang === lg ? { background: "var(--primary)", color: "var(--primary-ink)", borderColor: "var(--primary)" } : {}} onClick={() => setLang(lg)}>{lg.toUpperCase()}</button>
+              <button key={lg} className="type-chip" style={lang === lg ? { background: "var(--primary)", color: "var(--primary-ink)", borderColor: "var(--primary)", margin: 0 } : { margin: 0 }} onClick={() => setLang(lg)}>{lg.toUpperCase()}</button>
             ))}
+
+            {visitor ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
+                <span style={{ fontSize: 13, fontWeight: 600 }}>Hi, {visitor.name}</span>
+                <button className="type-chip" style={{ margin: 0, padding: '6px 12px', background: 'transparent' }} onClick={() => { onLogout(); setOpen(false); }}>
+                  Log Out
+                </button>
+              </div>
+            ) : (
+              <button className="type-chip" style={{ margin: 0, marginLeft: 'auto', padding: '6px 12px' }} onClick={() => { onOpenAuth(); setOpen(false); }}>
+                Sign In
+              </button>
+            )}
           </div>
         </div>
       </div>
