@@ -4,6 +4,7 @@ import { applyTheme } from './theme';
 import Home from './pages/Home';
 import { Services, Work, WorkDetail, Press, Training, Links, Contact } from './pages/InnerPages';
 import AdminCRM from './pages/AdminCRM';
+import VisitorAuthModal from './components/VisitorAuthModal';
 
 const TWEAK_DEFAULTS = {
   theme: "tide",
@@ -23,6 +24,9 @@ export default function App() {
   // Persist language in localStorage
   const lang0 = (typeof localStorage !== "undefined" && localStorage.getItem("ww-lang")) || "en";
   const [lang, setLangState] = useState(lang0);
+
+  const [visitor, setVisitor] = useState(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   
   const setLang = (lg) => {
     setLangState(lg);
@@ -44,6 +48,68 @@ export default function App() {
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
+
+  // Validate session token on page load
+  useEffect(() => {
+    const storedToken = localStorage.getItem('ww-visitor-token');
+    if (storedToken) {
+      fetch('/api/visitor/me', {
+        headers: { 'Authorization': `Bearer ${storedToken}` }
+      })
+      .then(res => {
+        if (!res.ok) throw new Error('Session invalid');
+        return res.json();
+      })
+      .then(data => {
+        setVisitor(data.user);
+      })
+      .catch(() => {
+        localStorage.removeItem('ww-visitor-token');
+      });
+    }
+  }, []);
+
+  // Listen for postMessage events from the Google Sign-in popup
+  useEffect(() => {
+    const handleGoogleMessage = (event) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data && event.data.type === 'GOOGLE_LOGIN_SUCCESS') {
+        const { email, name } = event.data.user;
+        
+        fetch('/api/visitor/google', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, name })
+        })
+        .then(res => {
+          if (!res.ok) throw new Error('Backend failed to create Google visitor session');
+          return res.json();
+        })
+        .then(data => {
+          localStorage.setItem('ww-visitor-token', data.token);
+          setVisitor(data.user);
+          setIsAuthModalOpen(false);
+        })
+        .catch(err => {
+          console.error('Google Auth backend error:', err);
+          alert('Failed to sign in with Google. Please try again.');
+        });
+      }
+    };
+
+    window.addEventListener('message', handleGoogleMessage);
+    return () => window.removeEventListener('message', handleGoogleMessage);
+  }, []);
+
+  const handleVisitorAuthSuccess = (user, token) => {
+    localStorage.setItem('ww-visitor-token', token);
+    setVisitor(user);
+  };
+
+  const handleVisitorLogout = () => {
+    localStorage.removeItem('ww-visitor-token');
+    setVisitor(null);
+  };
 
   const go = (r) => {
     window.location.hash = "#" + r;
@@ -79,9 +145,22 @@ export default function App() {
 
   return (
     <div className="app">
-      <Header lang={lang} setLang={setLang} route={base} go={go} />
+      <Header 
+        lang={lang} 
+        setLang={setLang} 
+        route={base} 
+        go={go} 
+        visitor={visitor}
+        onOpenAuth={() => setIsAuthModalOpen(true)}
+        onLogout={handleVisitorLogout}
+      />
       <main style={{ flex: 1 }}>{page}</main>
       <Footer lang={lang} go={go} />
+      <VisitorAuthModal 
+        isOpen={isAuthModalOpen} 
+        onClose={() => setIsAuthModalOpen(false)} 
+        onAuthSuccess={handleVisitorAuthSuccess}
+      />
     </div>
   );
 }
