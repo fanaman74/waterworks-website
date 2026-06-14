@@ -85,7 +85,7 @@ export function Header({ lang, setLang, route, go, visitor, onOpenAuth, onLogout
           <div className="header-actions">
             {visitor ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--primary)' }}>Hi, {visitor.name}</span>
+                <button onClick={() => go('account')} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 13.5, fontWeight: 600, color: 'var(--primary)' }}>Hi, {visitor.name}</button>
                 <button className="btn btn-ghost" style={{ padding: '8px 14px', fontSize: 13, height: 38 }} onClick={onLogout}>
                   Log Out
                 </button>
@@ -109,7 +109,7 @@ export function Header({ lang, setLang, route, go, visitor, onOpenAuth, onLogout
           <div style={{ display: "flex", flexWrap: 'wrap', gap: 8, marginTop: 12, alignItems: 'center' }}>
             {visitor ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
-                <span style={{ fontSize: 13, fontWeight: 600 }}>Hi, {visitor.name}</span>
+                <button onClick={() => { go('account'); setOpen(false); }} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 13, fontWeight: 600, color: 'var(--primary)' }}>Hi, {visitor.name}</button>
                 <button className="type-chip" style={{ margin: 0, padding: '6px 12px', background: 'transparent' }} onClick={() => { onLogout(); setOpen(false); }}>
                   Log Out
                 </button>
