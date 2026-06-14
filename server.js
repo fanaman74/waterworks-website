@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
@@ -13,6 +16,8 @@ const PASSWORD = process.env.CRM_PASSWORD || 'admin123';
 
 // In-memory sessions store
 const sessions = new Set();
+const visitorOtps = new Map(); // email -> { code, expiresAt }
+const visitorSessions = new Map(); // token -> { email, name, provider }
 
 app.use(cors());
 app.use(express.json());
@@ -43,6 +48,120 @@ app.post('/api/login', (req, res) => {
     return res.json({ token });
   }
   res.status(401).json({ error: 'Invalid password' });
+});
+
+// Visitor: Request Email Sign-In Code
+app.post('/api/visitor/send-code', async (req, res) => {
+  const { email } = req.body;
+  if (!email || !email.includes('@')) {
+    return res.status(400).json({ error: 'Valid email is required' });
+  }
+  
+  // Generate 6-digit OTP
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  visitorOtps.set(email, {
+    code,
+    expiresAt: Date.now() + 10 * 60 * 1000 // 10 minutes expiry
+  });
+
+  // Print code to console for easy testing/local fallback
+  console.log(`\n==========================================`);
+  console.log(`[VISITOR AUTH CODE FOR ${email}]: ${code}`);
+  console.log(`==========================================\n`);
+
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    // In development, if no key is provided, we succeed with console fallback
+    return res.status(200).json({ success: true, message: 'Code printed to console (API Key unconfigured)' });
+  }
+
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from: 'WaterWorks <onboarding@resend.dev>',
+        to: email,
+        subject: 'Your WaterWorks Sign In Code',
+        html: `<p>Hello!</p><p>Your verification code for WaterWorks is: <strong>${code}</strong></p><p>This code is valid for 10 minutes.</p>`
+      })
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error('Resend email delivery failed:', errText);
+      // We succeed anyway in dev if we logged it to the console
+      return res.status(200).json({ success: true, message: 'Code printed to console (Resend service failed)' });
+    }
+
+    res.status(200).json({ success: true, message: 'Verification email sent successfully' });
+  } catch (error) {
+    console.error('Error contacting Resend API:', error);
+    res.status(200).json({ success: true, message: 'Code printed to console (Network error sending email)' });
+  }
+});
+
+// Visitor: Verify Email Sign-In Code
+app.post('/api/visitor/verify-code', (req, res) => {
+  const { email, code } = req.body;
+  if (!email || !code) {
+    return res.status(400).json({ error: 'Email and code are required' });
+  }
+
+  const record = visitorOtps.get(email);
+  if (!record) {
+    return res.status(400).json({ error: 'No verification code requested for this email' });
+  }
+
+  if (Date.now() > record.expiresAt) {
+    visitorOtps.delete(email);
+    return res.status(400).json({ error: 'Verification code expired' });
+  }
+
+  if (record.code !== code.trim()) {
+    return res.status(400).json({ error: 'Invalid verification code' });
+  }
+
+  // Valid code: generate session
+  const token = 'visitor-token-' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+  const name = email.split('@')[0];
+  const user = { email, name, provider: 'email' };
+  
+  visitorSessions.set(token, user);
+  visitorOtps.delete(email); // consume code
+
+  res.json({ success: true, token, user });
+});
+
+// Visitor: Mock Google Login Endpoint
+app.post('/api/visitor/google', (req, res) => {
+  const { email, name } = req.body;
+  if (!email || !name) {
+    return res.status(400).json({ error: 'Email and name are required' });
+  }
+
+  const token = 'visitor-token-' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+  const user = { email, name, provider: 'google' };
+  visitorSessions.set(token, user);
+
+  res.json({ success: true, token, user });
+});
+
+// Visitor: Validate Session Token (me)
+app.get('/api/visitor/me', (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  const token = authHeader.substring(7);
+  const user = visitorSessions.get(token);
+  if (!user) {
+    return res.status(401).json({ error: 'Invalid or expired session' });
+  }
+  res.json({ user });
 });
 
 // Admin middleware to verify bearer token
