@@ -7,6 +7,7 @@ export default function VisitorAccount({ go }) {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState({ name: '', phone: '', address: '' });
   const [leads, setLeads] = useState([]);
+  const [leadMessages, setLeadMessages] = useState({}); // leadId -> messages[]
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState({ name: '', phone: '', address: '' });
   const [saving, setSaving] = useState(false);
@@ -33,8 +34,9 @@ export default function VisitorAccount({ go }) {
       updateMessageBox(lead.id, { sending: false });
       alert('Could not send message. Please try again.');
     } else {
-      updateMessageBox(lead.id, { sending: false, sent: true, text: '' });
-      setTimeout(() => updateMessageBox(lead.id, { open: false, sent: false }), 2000);
+      const newMsg = { lead_id: lead.id, from_email: user.email, message: box.text.trim(), created_at: new Date().toISOString() };
+      setLeadMessages(prev => ({ ...prev, [lead.id]: [...(prev[lead.id] || []), newMsg] }));
+      updateMessageBox(lead.id, { sending: false, open: false, text: '' });
     }
   };
 
@@ -64,6 +66,20 @@ export default function VisitorAccount({ go }) {
           console.error('Failed to load leads:', leadsRes.error.message);
         } else if (leadsRes.data) {
           setLeads(leadsRes.data);
+          if (leadsRes.data.length > 0) {
+            const ids = leadsRes.data.map(l => l.id);
+            supabase.from('lead_messages').select('*').in('lead_id', ids).order('created_at', { ascending: true })
+              .then(({ data: msgs }) => {
+                if (msgs) {
+                  const grouped = {};
+                  msgs.forEach(m => {
+                    if (!grouped[m.lead_id]) grouped[m.lead_id] = [];
+                    grouped[m.lead_id].push(m);
+                  });
+                  setLeadMessages(grouped);
+                }
+              });
+          }
         }
         setLoading(false);
       }).catch(err => {
@@ -183,6 +199,7 @@ export default function VisitorAccount({ go }) {
           <div style={{ display: 'grid', gap: 12 }}>
             {leads.map(lead => {
               const box = messageBoxes[lead.id] || {};
+              const msgs = leadMessages[lead.id] || [];
               return (
                 <div key={lead.id} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '16px 20px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
@@ -193,10 +210,22 @@ export default function VisitorAccount({ go }) {
                       <span style={{ fontWeight: 600, fontSize: 14 }}>{lead.service_type}</span>
                     )}
                   </div>
-                  {lead.notes && (
-                    <p style={{ fontSize: 13, color: 'var(--primary)', margin: '8px 0 0', fontStyle: 'italic' }}>
-                      Note from us: {lead.notes}
-                    </p>
+
+                  {(lead.notes || msgs.length > 0) && (
+                    <div style={{ display: 'grid', gap: 6, margin: '12px 0 4px' }}>
+                      {lead.notes && (
+                        <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 8, padding: '8px 12px', fontSize: 13 }}>
+                          <span style={{ fontSize: 11, color: '#2563eb', fontWeight: 600, display: 'block', marginBottom: 2 }}>WaterWorks</span>
+                          {lead.notes}
+                        </div>
+                      )}
+                      {msgs.map((msg, i) => (
+                        <div key={i} style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '8px 12px', fontSize: 13 }}>
+                          <span style={{ fontSize: 11, color: '#16a34a', fontWeight: 600, display: 'block', marginBottom: 2 }}>You</span>
+                          {msg.message}
+                        </div>
+                      ))}
+                    </div>
                   )}
                   <div style={{ marginTop: 12 }}>
                     {!box.open ? (
