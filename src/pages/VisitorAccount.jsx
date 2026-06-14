@@ -227,6 +227,12 @@ export default function VisitorAccount({ go }) {
                     )}
                   </div>
 
+                  {lead.message && (
+                    <p style={{ fontSize: 13, color: 'var(--muted)', margin: '6px 0 0' }}>
+                      {lead.message.length > 160 ? lead.message.slice(0, 160) + '…' : lead.message}
+                    </p>
+                  )}
+
                   {(lead.notes || msgs.length > 0) && (
                     <div style={{ display: 'grid', gap: 6, margin: '12px 0 4px' }}>
                       {lead.notes && (
