@@ -17,6 +17,8 @@ export default function AdminCRM({ lang }) {
   const [noteText, setNoteText] = useState('');
   const [saveStatus, setSaveStatus] = useState('');
 
+  const [leadMessages, setLeadMessages] = useState([]);
+
   const [isCreatingLead, setIsCreatingLead] = useState(false);
   const [newLeadForm, setNewLeadForm] = useState({
     name: '', email: '', phone: '', address: '',
@@ -139,6 +141,12 @@ export default function AdminCRM({ lang }) {
   };
 
   const selectedLead = leads.find(l => l.id === selectedLeadId);
+
+  useEffect(() => {
+    if (!selectedLeadId) return;
+    supabase.from('lead_messages').select('*').eq('lead_id', selectedLeadId).order('created_at', { ascending: true })
+      .then(({ data }) => setLeadMessages(data || []));
+  }, [selectedLeadId]);
 
   const filteredLeads = leads.filter(lead => {
     const matchesStatus = statusFilter === 'All' || lead.status === statusFilter;
@@ -429,6 +437,22 @@ export default function AdminCRM({ lang }) {
                       {selectedLead.message || 'No description provided.'}
                     </div>
                   </div>
+
+                  {leadMessages.length > 0 && (
+                    <div style={{ marginBottom: 28 }}>
+                      <span style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--muted)' }}>Client Follow-Up Messages</span>
+                      <div style={{ display: 'grid', gap: 8, marginTop: 8 }}>
+                        {leadMessages.map(msg => (
+                          <div key={msg.id} style={{ background: 'var(--surface-2)', padding: '10px 14px', borderRadius: 8, border: '1px solid var(--line)' }}>
+                            <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 4 }}>
+                              {new Date(msg.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                            </div>
+                            <div style={{ fontSize: 14, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{msg.message}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   <div style={{ borderTop: '1px solid var(--line)', paddingTop: 20, marginBottom: 20 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>

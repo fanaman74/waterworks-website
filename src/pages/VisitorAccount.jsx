@@ -2,27 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { Eyebrow } from '../components/Shared';
 
-function StatusBadge({ status }) {
-  const colors = {
-    'New': { bg: '#e5e7eb', color: '#6b7280' },
-    'In Progress': { bg: '#dbeafe', color: '#2563eb' },
-    'Completed': { bg: '#dcfce7', color: '#16a34a' },
-  };
-  const style = colors[status] || colors['New'];
-  return (
-    <span style={{
-      display: 'inline-block',
-      padding: '2px 10px',
-      borderRadius: 12,
-      fontSize: 12,
-      fontWeight: 600,
-      background: style.bg,
-      color: style.color
-    }}>
-      {status || 'New'}
-    </span>
-  );
-}
 
 export default function VisitorAccount({ go }) {
   const [user, setUser] = useState(null);
@@ -33,6 +12,31 @@ export default function VisitorAccount({ go }) {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [messageBoxes, setMessageBoxes] = useState({}); // leadId -> { open, text, sending, sent }
+
+  const openMessageBox = (leadId) =>
+    setMessageBoxes(prev => ({ ...prev, [leadId]: { open: true, text: '', sending: false, sent: false } }));
+
+  const updateMessageBox = (leadId, patch) =>
+    setMessageBoxes(prev => ({ ...prev, [leadId]: { ...prev[leadId], ...patch } }));
+
+  const handleSendMessage = async (lead) => {
+    const box = messageBoxes[lead.id];
+    if (!box?.text?.trim()) return;
+    updateMessageBox(lead.id, { sending: true });
+    const { error } = await supabase.from('lead_messages').insert({
+      lead_id: lead.id,
+      from_email: user.email,
+      message: box.text.trim()
+    });
+    if (error) {
+      updateMessageBox(lead.id, { sending: false });
+      alert('Could not send message. Please try again.');
+    } else {
+      updateMessageBox(lead.id, { sending: false, sent: true, text: '' });
+      setTimeout(() => updateMessageBox(lead.id, { open: false, sent: false }), 2000);
+    }
+  };
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -177,29 +181,66 @@ export default function VisitorAccount({ go }) {
           <div style={{ color: 'var(--muted)', fontSize: 14 }}>No service requests yet. <button className="btn btn-ghost" style={{ border: 'none', background: 'none', color: 'var(--primary)', cursor: 'pointer', padding: 0, fontSize: 14 }} onClick={() => go('contact')}>Submit a request</button></div>
         ) : (
           <div style={{ display: 'grid', gap: 12 }}>
-            {leads.map(lead => (
-              <div key={lead.id} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '16px 20px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                  <span style={{ fontSize: 13, color: 'var(--muted)' }}>
-                    {new Date(lead.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-                  </span>
-                  <StatusBadge status={lead.status} />
+            {leads.map(lead => {
+              const box = messageBoxes[lead.id] || {};
+              return (
+                <div key={lead.id} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '16px 20px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                    <span style={{ fontSize: 13, color: 'var(--muted)' }}>
+                      {new Date(lead.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </span>
+                    {lead.service_type && (
+                      <span style={{ fontWeight: 600, fontSize: 14 }}>{lead.service_type}</span>
+                    )}
+                  </div>
+                  {lead.notes && (
+                    <p style={{ fontSize: 13, color: 'var(--primary)', margin: '8px 0 0', fontStyle: 'italic' }}>
+                      Note from us: {lead.notes}
+                    </p>
+                  )}
+                  <div style={{ marginTop: 12 }}>
+                    {!box.open ? (
+                      <button
+                        className="btn"
+                        style={{ fontSize: 12, padding: '5px 12px' }}
+                        onClick={() => openMessageBox(lead.id)}
+                      >
+                        Send a message
+                      </button>
+                    ) : box.sent ? (
+                      <p style={{ fontSize: 13, color: '#16a34a' }}>✓ Message sent</p>
+                    ) : (
+                      <div>
+                        <textarea
+                          value={box.text || ''}
+                          onChange={e => updateMessageBox(lead.id, { text: e.target.value })}
+                          placeholder="Type your message..."
+                          rows={3}
+                          style={{ width: '100%', fontSize: 13, padding: 8, borderRadius: 6, border: '1px solid var(--border)', resize: 'vertical', boxSizing: 'border-box', fontFamily: 'inherit' }}
+                        />
+                        <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+                          <button
+                            className="btn btn-primary"
+                            style={{ fontSize: 12, padding: '5px 14px' }}
+                            onClick={() => handleSendMessage(lead)}
+                            disabled={box.sending || !box.text?.trim()}
+                          >
+                            {box.sending ? 'Sending…' : 'Send'}
+                          </button>
+                          <button
+                            className="btn"
+                            style={{ fontSize: 12, padding: '5px 12px' }}
+                            onClick={() => updateMessageBox(lead.id, { open: false })}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                {lead.service_type && (
-                  <p style={{ fontWeight: 600, fontSize: 15, marginBottom: 4 }}>{lead.service_type}</p>
-                )}
-                {lead.message && (
-                  <p style={{ fontSize: 13, color: 'var(--muted)', margin: 0 }}>
-                    {lead.message.length > 120 ? lead.message.slice(0, 120) + '…' : lead.message}
-                  </p>
-                )}
-                {lead.notes && (
-                  <p style={{ fontSize: 12, color: 'var(--primary)', marginTop: 8, marginBottom: 0, fontStyle: 'italic' }}>
-                    Note from us: {lead.notes}
-                  </p>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
