@@ -66,6 +66,22 @@ export default function VisitorAccount({ go }) {
           console.error('Failed to load leads:', leadsRes.error.message);
         } else if (leadsRes.data) {
           setLeads(leadsRes.data);
+          // Auto-fill profile from most recent lead if profile fields are empty
+          if (leadsRes.data.length > 0) {
+            const latest = leadsRes.data[0];
+            setProfile(prev => ({
+              ...prev,
+              name: prev.name || latest.name || '',
+              phone: prev.phone || latest.phone || '',
+              address: prev.address || latest.address || ''
+            }));
+            setEditForm(prev => ({
+              ...prev,
+              name: prev.name || latest.name || '',
+              phone: prev.phone || latest.phone || '',
+              address: prev.address || latest.address || ''
+            }));
+          }
           if (leadsRes.data.length > 0) {
             const ids = leadsRes.data.map(l => l.id);
             supabase.from('lead_messages').select('*').in('lead_id', ids).order('created_at', { ascending: true })
