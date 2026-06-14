@@ -19,11 +19,11 @@ export async function writeDB(data) {
 export async function addLead(lead) {
   const db = await readDB();
   const newLead = {
+    notes: '',
+    ...lead,
     id: 'lead-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
     date: new Date().toISOString(),
-    status: 'New',
-    notes: '',
-    ...lead
+    status: 'New'
   };
   db.leads.push(newLead);
   await writeDB(db);
