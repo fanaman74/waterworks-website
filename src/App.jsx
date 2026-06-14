@@ -65,9 +65,11 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const handleVisitorAuthSuccess = (user) => {
+  const handleVisitorAuthSuccess = async (user) => {
     setVisitor(user);
-    go('account');
+    const { data: { user: u } } = await supabase.auth.getUser();
+    const { data: adminRow } = await supabase.from('admins').select('user_id').eq('user_id', u?.id).maybeSingle();
+    go(adminRow ? 'admin' : 'account');
   };
 
   const handleVisitorLogout = async () => {
